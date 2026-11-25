@@ -1,0 +1,44 @@
+# ---------- Segredos ----------
+.env
+*.env
+!.env.example
+*.jks
+*.keystore
+keystore.properties
+local.properties
+google-services.json
+
+# ---------- Sistema operacional / IDE ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# ---------- Android / Gradle ----------
+.gradle/
+**/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+android/app/release/
+
+# ---------- Java / Maven / Quarkus ----------
+target/
+*.class
+*.log
+hs_err_pid*
+.quarkus/
+
+# ---------- Dados locais ----------
+infra/data/
+infra/backups/
+*.sql.gz
+*.fdb
+*.gdb
