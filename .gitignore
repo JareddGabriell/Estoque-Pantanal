@@ -1,4 +1,4 @@
-# ---------- Segredos ----------
+# ---------- Secrets ----------
 .env
 *.env
 !.env.example
@@ -8,7 +8,7 @@ keystore.properties
 local.properties
 google-services.json
 
-# ---------- Sistema operacional / IDE ----------
+# ---------- OS / IDE ----------
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -36,7 +36,7 @@ target/
 hs_err_pid*
 .quarkus/
 
-# ---------- Dados locais ----------
+# ---------- Local data ----------
 infra/data/
 infra/backups/
 *.sql.gz

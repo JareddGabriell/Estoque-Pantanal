@@ -1,35 +1,35 @@
-# Estoque Pantanal
+# Beverage Inventory
 
-Controle de estoque de bebidas do restaurante Pantanal (Cascavel, PR).
+Offline-first beverage inventory app for restaurants.
 
-O gerente cadastra fornecedores e produtos, com estoque mínimo e ideal. Os funcionários fazem a contagem pelo app Android, que funciona offline. O app gera o pedido sugerido para cada fornecedor e o envia pelo WhatsApp.
+The manager registers suppliers and products, each with a minimum and a target stock level. Staff count the stock with the Android app, which keeps working without a connection. From the counts, the app builds a suggested order for each supplier and sends it through WhatsApp.
 
-## Estrutura
+## Structure
 
-| Pasta | Conteúdo |
+| Folder | Contents |
 |---|---|
-| `android/` | App Android (Kotlin, Jetpack Compose, Room, WorkManager) |
-| `server/` | API (Quarkus, Java 25, Postgres, Flyway) |
-| `infra/` | Docker Compose e scripts de backup |
-| `docs/` | Decisões, roadmap e ambiente de desenvolvimento |
+| `android/` | Android app (Kotlin, Jetpack Compose, Room, WorkManager) |
+| `server/` | API (Quarkus, Java 25, PostgreSQL, Flyway) |
+| `infra/` | Docker Compose and backup scripts |
+| `docs/` | Decisions, roadmap and development environment |
 
-## Rodando localmente
+## Running locally
 
-Pré-requisitos: Docker Desktop, JDK 25 e Android Studio.
+Prerequisites: Docker, JDK 25 and Android Studio.
 
-1. Copie `infra/.env.example` para `infra/.env` e ajuste as senhas.
-2. Suba o banco de dados:
-   ```powershell
+1. Copy `infra/.env.example` to `infra/.env` and set the passwords.
+2. Start the database:
+   ```bash
    docker compose -f infra/docker-compose.yml up -d
    ```
-3. Rode a API em `server/` (`./mvnw quarkus:dev`) e confira se `http://localhost:8080/q/health` responde.
-4. Abra `android/` no Android Studio e rode no emulador. No emulador, a API fica em `http://10.0.2.2:8080`.
+3. Run the API from `server/` with `./mvnw quarkus:dev`, then check that `http://localhost:8080/q/health` responds.
+4. Open `android/` in Android Studio and run the app on the emulator. From the emulator, the API is reachable at `http://10.0.2.2:8080`.
 
-## Segredos
+## Secrets
 
-Nunca versionar a keystore de assinatura, os arquivos `.env`, o `local.properties` ou dados reais do restaurante. No CI, eles ficam nos secrets do GitHub Actions.
+Never commit the signing keystore, `.env` files, `local.properties` or any real restaurant data. In CI, these live in GitHub Actions secrets.
 
-## Documentação
+## Documentation
 
-- [Decisões e roadmap](docs/decisoes-e-roadmap.md)
-- [Ambiente de desenvolvimento (Windows)](docs/ambiente-dev-windows.md)
+- [Decisions and roadmap](docs/decisions-and-roadmap.md)
+- [Development environment](docs/dev-environment.md)

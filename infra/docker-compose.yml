@@ -1,9 +1,9 @@
-name: estoque-pantanal
+name: beverage-inventory
 
 services:
   db:
     image: postgres:17-alpine
-    container_name: estoque-db
+    container_name: inventory-db
     restart: unless-stopped
     env_file: .env
     environment:
