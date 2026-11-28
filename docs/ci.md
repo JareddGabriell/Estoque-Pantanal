@@ -42,7 +42,9 @@ LANDMINE: change a tool version and its checksum together, in the same commit. T
 
 ## Required checks
 
-CI reports on every PR, but a red check blocks the merge only when the `main` ruleset requires it. The ruleset is proposed in issue #3 and applied by a human. The checks to require are `server`, `android`, `policy`, `shellcheck`, `secret-scan`, `compose-validate` and `pr-title`.
+CI reports on every PR, but a red check blocks the merge only when the `main` ruleset requires it. The ruleset is proposed in issue #3 and applied by a human. The checks to require are `changes`, `server`, `android`, `policy`, `shellcheck`, `secret-scan`, `compose-validate` and `pr-title`.
+
+LANDMINE: `changes` must be required too. When it fails, `server` and `android` are skipped because they depend on it, and a skipped job counts as a passing required check.
 
 ## Running the same checks locally
 
