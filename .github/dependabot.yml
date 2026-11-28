@@ -1,0 +1,48 @@
+# Weekly dependency updates. Each ecosystem groups its updates into one PR so
+# the titles stay short and the CI cost stays low.
+#
+# LANDMINE: PR titles must pass the pr-title check (Conventional Commits, at
+# most 72 characters), because the squash merge uses them as the commit
+# subject. The prefixes below give "build(deps): ..." and "ci(deps): ...".
+# A long single-dependency title can still exceed 72 characters; shorten the
+# PR title before merging.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /server
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      server:
+        patterns: ["*"]
+
+  - package-ecosystem: gradle
+    directory: /android
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      android:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs every *.test.sh for the git hook checks and the Claude Code hooks.
-# Used by the pre-push hook and, from Phase 2, by the CI policy job.
+# Used by the pre-push hook and by the CI policy job (.github/workflows/ci.yml).
 set -uo pipefail
 
 root=$(git rev-parse --show-toplevel)

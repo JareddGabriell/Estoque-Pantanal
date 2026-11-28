@@ -62,3 +62,4 @@ Never commit the signing keystore, `.env` files, `local.properties` or any real 
 - [AGENTS.md](AGENTS.md): how we work, the rules and the quality bar
 - [Decisions and roadmap](docs/decisions-and-roadmap.md)
 - [Development environment](docs/dev-environment.md)
+- [Continuous integration](docs/ci.md)
