@@ -10,6 +10,8 @@ payload='{"tool_input":{"file_path":"/repo/server/V1__init.sql"},"stop_hook_acti
 get() { printf '%s' "$payload" | JSON_GET_BACKEND=$1 json_get "$2"; }
 is() { [[ $(get "$1" "$2") == "$3" ]]; }
 
+invalid_json_fails() { ! (printf 'not json' | JSON_GET_BACKEND=$1 json_get a 2> /dev/null); }
+
 backends=()
 command -v jq > /dev/null 2>&1 && backends+=(jq)
 command -v python3 > /dev/null 2>&1 && backends+=(python3)
@@ -22,7 +24,7 @@ for b in "${backends[@]}"; do
     expect_pass "$b: false boolean" is "$b" n.off false
     expect_pass "$b: missing key is empty" is "$b" tool_input.nope ""
     expect_pass "$b: path through a non-object is empty" is "$b" tool_input.file_path.x ""
-    expect_pass "$b: invalid JSON fails" bash -c 'source "$1"; ! (printf "not json" | JSON_GET_BACKEND=$2 json_get a)' _ "$here/lib/json-get.sh" "$b"
+    expect_pass "$b: invalid JSON fails" invalid_json_fails "$b"
 done
 echo "backends tested: ${backends[*]}"
 

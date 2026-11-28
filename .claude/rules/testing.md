@@ -26,7 +26,7 @@ Most of these tools are not set up yet. Phase 3 sets up the server layers and Ph
 - NEVER disable a flaky test without an open issue linked in the skip annotation. Fix the cause.
 - NEVER write a test without a real assertion. A test that only checks "no exception" must say so in its name and assert on the outcome.
 - NEVER lower a coverage or mutation threshold to make a build pass without a justification in the PR.
-- MUST pass test credentials through helper parameters, never as literals next to a key name, so gitleaks stays useful.
+- MUST pass test credentials through helper parameters, never as literals next to a key name, so the secret scanner stays useful.
 - MUST cover every bug fix with a test that failed before the fix (see `tdd.md`).
 
 ## PIT

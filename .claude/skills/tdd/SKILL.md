@@ -121,7 +121,7 @@ class SyncPushIdempotencyTest {
 Notes:
 
 - The test artifact in Quarkus 4 is `io.quarkus:quarkus-junit` (formerly `quarkus-junit5`). `@QuarkusTest` is `io.quarkus.test.junit.QuarkusTest`.
-- Credentials come from helpers (`TestUsers`), never as literals next to a key (gitleaks).
+- Credentials come from helpers (`TestUsers`), never as literals next to a key (secret scan).
 - LANDMINE: never run PIT against `@QuarkusTest` classes. Quarkus restarts for every mutant.
 
 ---

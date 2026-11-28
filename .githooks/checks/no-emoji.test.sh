@@ -31,7 +31,7 @@ expect_fail "text symbol forced to emoji with VS16" "$check" --file "$(file g "l
 expect_fail "flag" "$check" --file "$(file h "made in ${flag_br}")"
 expect_output_contains "U+1F37A" "report names the code point" "$check" --file "$(file i "x ${beer}")"
 expect_pass "emoji only in git comment lines of a message" "$check" --file "$(file j $'feat: x\n# '"${beer}")"
-expect_fail "stdin input" bash -c 'printf "%s\n" "$2" | "$1" --file -' _ "$check" "title ${beer}"
+expect_fail "stdin input" pipe_to "title ${beer}" "$check" --file -
 expect_status 2 "usage error without arguments" "$check"
 
 # --tracked mode.
@@ -39,26 +39,26 @@ repo=$(make_repo)
 printf 'hello %s\n' "$arrow" > "$repo/README.md"
 printf '\x00\x01binary %s\n' "$beer" > "$repo/blob.bin"
 git -C "$repo" add README.md blob.bin
-expect_pass "--tracked: clean text, emoji only inside a binary file" bash -c 'cd "$1" && "$2" --tracked' _ "$repo" "$check"
+expect_pass "--tracked: clean text, emoji only inside a binary file" in_dir "$repo" "$check" --tracked
 printf 'untracked %s\n' "$beer" > "$repo/untracked.txt"
-expect_pass "--tracked ignores untracked files" bash -c 'cd "$1" && "$2" --tracked' _ "$repo" "$check"
+expect_pass "--tracked ignores untracked files" in_dir "$repo" "$check" --tracked
 mkdir -p "$repo/docs"
 printf 'line one\nline two %s\n' "$star" > "$repo/docs/guide.md"
 git -C "$repo" add docs/guide.md
-expect_fail "--tracked: emoji in a tracked file" bash -c 'cd "$1" && "$2" --tracked' _ "$repo" "$check"
-expect_output_contains "docs/guide.md:2:" "--tracked reports file and line" bash -c 'cd "$1" && "$2" --tracked' _ "$repo" "$check"
+expect_fail "--tracked: emoji in a tracked file" in_dir "$repo" "$check" --tracked
+expect_output_contains "docs/guide.md:2:" "--tracked reports file and line" in_dir "$repo" "$check" --tracked
 git -C "$repo" rm -q --cached docs/guide.md
 touch "$repo/name-${beer}.txt"
 git -C "$repo" add "name-${beer}.txt"
-expect_fail "--tracked: emoji in a file name" bash -c 'cd "$1" && "$2" --tracked' _ "$repo" "$check"
+expect_fail "--tracked: emoji in a file name" in_dir "$repo" "$check" --tracked
 git -C "$repo" rm -q --cached "name-${beer}.txt"
 
 # --range mode.
 commit_with_message "$repo" "chore: initial commit"
 base=$(git -C "$repo" rev-parse HEAD)
 commit_with_message "$repo" "feat: add outbox ${arrow} worker"
-expect_pass "--range with clean messages" bash -c 'cd "$1" && "$2" --range "$3..HEAD"' _ "$repo" "$check" "$base"
+expect_pass "--range with clean messages" in_dir "$repo" "$check" --range "$base..HEAD"
 commit_with_message "$repo" "fix: retry ${beer}"
-expect_fail "--range with an emoji in a message" bash -c 'cd "$1" && "$2" --range "$3..HEAD"' _ "$repo" "$check" "$base"
+expect_fail "--range with an emoji in a message" in_dir "$repo" "$check" --range "$base..HEAD"
 
 finish

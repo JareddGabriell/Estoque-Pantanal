@@ -35,7 +35,8 @@ git -C "$repo" checkout -q -- docs/README.md
 echo "class A {}" > "$repo/server/src/main/java/A.java"
 expect_pass "server change with passing build" run '{"stop_hook_active":false}'
 expect_output_contains "gradle --quiet --console=plain test in server" "server change runs the server unit tests" calls
-expect_pass "android was not built for a server-only change" bash -c '! grep -q "in android" "$1/calls.log"' _ "$repo"
+android_not_built() { ! grep -q "in android" "$repo/calls.log"; }
+expect_pass "android was not built for a server-only change" android_not_built
 reset_calls
 
 fake_gradlew server 1

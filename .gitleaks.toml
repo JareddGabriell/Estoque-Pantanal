@@ -1,4 +1,10 @@
-# gitleaks configuration (format of gitleaks v8.25+).
+# Secret scan configuration, in the gitleaks v8.25+ format. The scanner is
+# Betterleaks 1.x (the maintained successor of gitleaks), which reads this
+# format but only when it is passed explicitly: --config .gitleaks.toml and
+# --gitleaks-ignore-path . (see .githooks/pre-push).
+#
+# LANDMINE: Betterleaks 2 drops [[allowlists]] and .gitleaksignore fingerprints.
+# Revisit this file and .gitleaksignore before moving to 2.x.
 #
 # Policy: extend the default rule set and add no allowlists. A reviewed false
 # positive is silenced at the exact line with a `gitleaks:allow` comment, or in

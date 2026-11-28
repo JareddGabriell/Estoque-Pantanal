@@ -1,3 +1,8 @@
+---
+paths:
+  - "android/**"
+---
+
 # Android architecture
 
 Applies to everything under `android/`. Package: `app.beverageinventory`. minSdk 26.
@@ -17,7 +22,7 @@ Applies to everything under `android/`. Package: `app.beverageinventory`. minSdk
 - MUST send the outbox with WorkManager. NEVER call the network from a ViewModel.
 - MUST put repositories between ViewModels and data sources. Repositories return `Flow` for observed data and `suspend` functions for one-shot work.
 - MUST export the Room schema to a tracked folder and add a `Migration` with a `MigrationTestHelper` test for every schema version bump.
-- NEVER edit an exported Room schema JSON that is already tracked. A Claude Code hook blocks this; bump the database version instead.
+- NEVER edit an exported Room schema JSON once it is merged. A Claude Code hook blocks edits to schemas that exist in `origin/main`; bump the database version instead.
 - NEVER use `fallbackToDestructiveMigration`. It would erase unsent counts.
 
 ## Modules

@@ -14,8 +14,9 @@ The project is developed on two machines: a Fedora Linux workstation and a Windo
 | Docker | PostgreSQL and Quarkus Dev Services | On Windows, Docker Desktop (WSL2 backend) |
 | DBeaver | Inspecting the database | — |
 | perl | `no-emoji.sh` check | Shipped with Git for Windows and Fedora |
-| jq or python3 | Claude Code hooks read their JSON input | Either one is enough. Fedora has python3. On Windows, install jq (`winget install jqlang.jq`) |
-| gitleaks | Secret scan in the pre-push hook | Optional locally. When it is missing, pre-push skips the scan, and CI runs it from Phase 2 |
+| jq or python3 | Claude Code hooks read their JSON input | Either one is enough on Fedora, which has python3. On Windows, jq is required (see below) |
+| Betterleaks 1.x | Secret scan in the pre-push hook | Optional locally (Fedora: `sudo dnf install betterleaks`). When it is missing, pre-push skips the scan. CI runs it from Phase 2 |
+| ShellCheck | Linting the hook scripts | `shellcheck .githooks/commit-msg .githooks/pre-push .githooks/*.sh .githooks/*/*.sh .claude/hooks/*.sh .claude/hooks/lib/*.sh` (settings in `.shellcheckrc`). It becomes a CI check in Phase 2 |
 
 ## Fedora
 
@@ -26,6 +27,7 @@ The project is developed on two machines: a Fedora Linux workstation and a Windo
 ## Windows
 
 - **Project folder:** keep it outside OneDrive, whose syncing interferes with Gradle, and outside the WSL filesystem.
+- **jq for the Claude Code hooks:** Claude Code runs the hooks with Git Bash, which does not ship jq. Install it with `winget install jqlang.jq` and open a new terminal. Do not rely on python3: under Git Bash, `python3` is often the Microsoft Store alias, which does not run Python. Without jq or a working python3, the PreToolUse hooks block every file edit, because they fail closed.
 - **Emulator:** Docker Desktop enables Hyper-V. Turn on the "Windows Hypervisor Platform" feature so the emulator can run alongside it.
 
 ## Common setup
@@ -61,7 +63,7 @@ It sets `git config core.hooksPath .githooks` for this clone and lists any missi
 | Hook | Runs |
 |---|---|
 | `commit-msg` | `commit-subject.sh --file`, `no-ai-coauthor.sh --file`, `no-emoji.sh --file` on the new message |
-| `pre-push` | `.githooks/run-tests.sh`; then `commit-subject.sh`, `no-ai-coauthor.sh` and `no-emoji.sh` with `--range` on the pushed commits; `no-emoji.sh --tracked`; and gitleaks, when it is installed |
+| `pre-push` | `.githooks/run-tests.sh`; then `commit-subject.sh`, `no-ai-coauthor.sh` and `no-emoji.sh` with `--range` on the pushed commits; `no-emoji.sh --tracked`; and Betterleaks 1.x, when it is installed |
 
 To run the checks by hand:
 
@@ -80,7 +82,7 @@ On Windows, run the installer from Git Bash. Git runs the hooks with its bundled
 
 The project settings in `.claude/settings.json` disable commit and PR attribution, allow the routine commands, and add these hooks:
 
-- PreToolUse: blocks edits to Flyway migrations and Room schema JSON files that are already tracked by git.
+- PreToolUse: blocks edits to Flyway migrations and Room schema JSON files that already exist in `origin/main`. Files on a feature branch that are not merged yet stay editable. If `origin/main` is not available locally, edits to those paths are blocked until you run `git fetch origin main`.
 - Stop: when `server/src` or `android/` has uncommitted changes, runs `./gradlew test` (server) or `./gradlew testDebugUnitTest` (android) and sends failures back to Claude.
 
 ## Conventions

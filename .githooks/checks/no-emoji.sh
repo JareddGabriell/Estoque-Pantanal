@@ -23,14 +23,18 @@
 set -euo pipefail
 export LC_ALL=C.UTF-8
 
-# Prints "<label>:<line>: U+XXXX" for each offending line; exits 1 if any.
+# scan <skip-comments 0|1> <label> [file]: reads the file (or stdin), prints
+# "<label>:<line>: U+XXXX" for each offending line, exits 1 if any.
 # Comment lines ("#...") are skipped only in message mode, because git strips them.
+# shellcheck disable=SC2016 # Perl source: the $ variables belong to Perl, not to the shell.
 readonly PERL_SCAN='
     use strict; no warnings;
     my $skip_comments = shift @ARGV;
     my $label = shift @ARGV;
+    my $in = \*STDIN;
+    if (@ARGV) { open($in, "<", $ARGV[0]) or die "no-emoji: cannot read $ARGV[0]\n" }
     my $found = 0;
-    while (my $line = <STDIN>) {
+    while (my $line = <$in>) {
         last if $skip_comments && $line =~ /^# -+ >8 -+$/;
         next if $skip_comments && $line =~ /^#/;
         if ($line =~ /([\p{Emoji_Presentation}\x{FE0F}\x{20E3}])/) {
@@ -74,7 +78,7 @@ case "$1" in
         # Contents of tracked text files; -I skips files git considers binary.
         while IFS= read -r -d '' path; do
             [[ -f $path ]] || continue
-            add scan 0 "$path" < "$path"
+            add scan 0 "$path" "$path"
         done < <(git grep -I -z -l -e '' -- . || true)
         [[ -z $report ]] || fail "$report"
         ;;
@@ -84,7 +88,7 @@ case "$1" in
             add scan 1 "stdin"
         else
             [[ -r $2 ]] || { echo "no-emoji: cannot read $2" >&2; exit 2; }
-            add scan 1 "$2" < "$2"
+            add scan 1 "$2" "$2"
         fi
         [[ -z $report ]] || fail "$report"
         ;;

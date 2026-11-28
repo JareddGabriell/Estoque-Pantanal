@@ -4,7 +4,14 @@
 #   1. tests of the check scripts and Claude Code hooks (.githooks/run-tests.sh)
 #   2. commit subjects, AI attribution and emoji in the pushed commit messages
 #   3. emoji in every tracked file
-#   4. gitleaks on the pushed commits, when gitleaks is installed (CI always runs it)
+#   4. Betterleaks secret scan of the pushed commits, when Betterleaks 1.x is
+#      installed (the Phase 2 CI runs it on every PR). It reads .gitleaks.toml
+#      and .gitleaksignore, passed explicitly because Betterleaks does not
+#      auto-load them.
+#
+# LANDMINE: the scan uses the Betterleaks 1.x CLI (--log-opts,
+# --gitleaks-ignore-path). Betterleaks 2 removes --log-opts and .gitleaksignore,
+# so a 2.x binary is skipped here with a warning until this hook is updated.
 # Installed by .githooks/install.sh (core.hooksPath).
 set -uo pipefail
 
@@ -19,8 +26,20 @@ status=0
     status=1
 }
 
+secret_scan=off
+if command -v betterleaks > /dev/null 2>&1; then
+    version=$(betterleaks version 2> /dev/null | tail -n 1)
+    if [[ $version == 1.* ]]; then
+        secret_scan=on
+    else
+        echo "pre-push: Betterleaks ${version:-of unknown version} is not 1.x; secret scan skipped locally (CI runs it)" >&2
+    fi
+else
+    echo "pre-push: betterleaks is not installed; secret scan skipped locally (CI runs it)" >&2
+fi
+
 ranges=()
-while read -r local_ref local_sha remote_ref remote_sha; do
+while read -r local_ref local_sha _ remote_sha; do
     [[ $local_sha == "$zero" ]] && continue   # deleting a remote branch
     if [[ $remote_sha != "$zero" ]] && git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
         ranges+=("${remote_sha}..${local_sha}")
@@ -35,16 +54,14 @@ for range in "${ranges[@]}"; do
     "$checks/commit-subject.sh" --range "$range" || status=1
     "$checks/no-ai-coauthor.sh" --range "$range" || status=1
     "$checks/no-emoji.sh" --range "$range" || status=1
-    if command -v gitleaks > /dev/null 2>&1; then
-        gitleaks git --no-banner --redact --config "$root/.gitleaks.toml" --log-opts="$range" "$root" || status=1
+    if [[ $secret_scan == on ]]; then
+        betterleaks git --no-banner --redact --config "$root/.gitleaks.toml" \
+            --gitleaks-ignore-path "$root" --log-opts="$range" "$root" || status=1
     fi
 done
 
 "$checks/no-emoji.sh" --tracked || status=1
 
-if ! command -v gitleaks > /dev/null 2>&1; then
-    echo "pre-push: gitleaks is not installed; secret scan skipped locally (CI runs it)" >&2
-fi
 if [[ $status -ne 0 ]]; then
     echo "pre-push: push rejected. Fix the problems above, then push again." >&2
 fi

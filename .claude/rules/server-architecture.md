@@ -1,3 +1,8 @@
+---
+paths:
+  - "server/**"
+---
+
 # Server architecture
 
 Applies to everything under `server/`. Stack: Quarkus 4.0.x, Java 25, Gradle Kotlin DSL, PostgreSQL 18, Flyway.
@@ -6,7 +11,7 @@ Applies to everything under `server/`. Stack: Quarkus 4.0.x, Java 25, Gradle Kot
 
 - MUST make Flyway the only owner of the database schema. Migrations live in `server/src/main/resources/db/migration/` and are named `V<version>__<description>.sql`.
 - MUST set `quarkus.hibernate-orm.schema-management.strategy=none` in every profile. NEVER let Hibernate create, update or validate the schema by generating DDL.
-- NEVER edit, rename or delete a migration once it is merged. Fix a mistake with a new migration. A Claude Code hook blocks edits to tracked migrations.
+- NEVER edit, rename or delete a migration once it is merged. Fix a mistake with a new migration. A Claude Code hook blocks edits to migrations that exist in `origin/main`. On a feature branch, a migration that is not merged yet can still be edited.
 - MUST make every migration safe to run on a database with real data. Backfill in the migration, and add `NOT NULL` only after the backfill.
 - LANDMINE: Quarkus 4 removed `quarkus.hibernate-orm.database.generation`. Use `schema-management.strategy`.
 - LANDMINE: the Hibernate ORM dialect in Quarkus 4 targets PostgreSQL 16 or later by default. Set `quarkus.datasource.db-version` if you ever have to run against an older server.

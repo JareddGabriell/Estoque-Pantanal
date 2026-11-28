@@ -9,7 +9,7 @@ The repository is public. Assume everything committed is read by strangers.
 - MUST keep CI secrets in GitHub Actions secrets. NEVER echo them in a workflow step.
 - MUST keep `infra/.env.example` free of real values. It documents the variable names only.
 - MUST treat a secret that was committed, even if it was removed later, as leaked. Rotate it; deleting it from the history does not make it safe again.
-- MUST run gitleaks with `.gitleaks.toml`. NEVER add broad allowlists. Silence a reviewed false positive with a line-level `gitleaks:allow` comment or a fingerprint in `.gitleaksignore`, and justify it in the PR.
+- MUST scan for secrets with Betterleaks 1.x using `.gitleaks.toml` and `.gitleaksignore`. NEVER add broad allowlists. Silence a reviewed false positive with a line-level `gitleaks:allow` comment or a fingerprint in `.gitleaksignore`, and justify it in the PR.
 
 ## Logging and personal data
 

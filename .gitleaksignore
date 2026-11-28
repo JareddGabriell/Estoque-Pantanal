@@ -1,0 +1,8 @@
+# Reviewed false positives, one exact finding per line (commit:path:rule:line).
+# Never add a broader exception here; see the policy in .gitleaks.toml.
+#
+# infra/.env.example line 4 holds a placeholder POSTGRES_PASSWORD value, not a
+# secret. The generic-password rule of Betterleaks flags it in the two commits
+# that wrote that line.
+29bef4fad17616e7b001a9b6232579ab63766467:infra/.env.example:generic-password:4
+626b4b82bc9fae5cc714042bd462ed8a5324a5e6:infra/.env.example:generic-password:4

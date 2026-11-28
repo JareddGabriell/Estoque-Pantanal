@@ -1,0 +1,5 @@
+# Resolve `# shellcheck source=<relative path>` directives from the directory of
+# the script being checked, so ShellCheck follows the shared helpers
+# (.githooks/lib/testlib.sh, .claude/hooks/lib/json-get.sh) from any cwd.
+source-path=SCRIPTDIR
+external-sources=true

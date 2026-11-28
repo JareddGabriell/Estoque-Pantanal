@@ -25,7 +25,7 @@ Point git at the versioned hooks once per clone:
 .githooks/install.sh
 ```
 
-This sets `core.hooksPath` to `.githooks/`. The `commit-msg` hook checks the commit subject, AI attribution and emoji. The `pre-push` hook repeats those checks on the pushed commits, scans tracked files for emoji, runs the tests of the checks and, when gitleaks is installed, scans for secrets. See [docs/dev-environment.md](docs/dev-environment.md#git-hooks).
+This sets `core.hooksPath` to `.githooks/`. The `commit-msg` hook checks the commit subject, AI attribution and emoji. The `pre-push` hook repeats those checks on the pushed commits, scans tracked files for emoji, runs the tests of the checks and, when Betterleaks is installed, scans for secrets. See [docs/dev-environment.md](docs/dev-environment.md#git-hooks).
 
 ### API
 

@@ -44,13 +44,13 @@ docs/               project documentation
 
 ## Rules
 
-Each file in `.claude/rules/` uses MUST / NEVER statements. Read the ones that match the change.
+Each file in `.claude/rules/` uses MUST / NEVER statements. Read the ones that match the change. Claude Code loads `.claude/rules/` automatically. Rules marked "scoped" have `paths` frontmatter and load only when Claude reads or edits a file under that path. The others load in every session.
 
 | File | Theme |
 |---|---|
 | `.claude/rules/offline-sync.md` | Room as source of truth, outbox, UUIDs, idempotent push, append-only counts, soft deletes, last-write-wins. The most important rule set |
-| `.claude/rules/android-architecture.md` | Compose, unidirectional state, `StateFlow`, Room, WorkManager, Hilt, pt-BR strings, pure `:core:domain` |
-| `.claude/rules/server-architecture.md` | Flyway owns the schema, immutable migrations, layers, DTOs, Bean Validation, RFC 7807 errors, JWT in the header |
+| `.claude/rules/android-architecture.md` | Scoped to `android/**`. Compose, unidirectional state, `StateFlow`, Room, WorkManager, Hilt, pt-BR strings, pure `:core:domain` |
+| `.claude/rules/server-architecture.md` | Scoped to `server/**`. Flyway owns the schema, immutable migrations, layers, DTOs, Bean Validation, RFC 7807 errors, JWT in the header |
 | `.claude/rules/security.md` | Secrets, password hashing, tokens, personal data |
 | `.claude/rules/observability.md` | Log levels, no database exception messages, public ids only |
 | `.claude/rules/testing.md` | Test strategy per layer and testing rules |
@@ -74,11 +74,12 @@ Git hooks are local and only run after `.githooks/install.sh`. `--no-verify` ski
 | No emoji in commit messages | `[gate]` | commit-msg and pre-push hooks: `no-emoji.sh --file`, `--range` |
 | No emoji in tracked files and file names | `[gate]` | pre-push hook: `no-emoji.sh --tracked` |
 | The check scripts and Claude Code hooks pass their own tests | `[gate]` | pre-push hook: `.githooks/run-tests.sh` |
-| Claude Code does not edit tracked Flyway migrations | `[gate]` | PreToolUse hook: `.claude/hooks/protect-tracked-file.sh flyway` (Write, Edit and MultiEdit only; shell commands and humans are not covered) |
-| Claude Code does not edit tracked Room schema JSON | `[gate]` | PreToolUse hook: `.claude/hooks/protect-tracked-file.sh room` (same limits) |
+| Claude Code does not edit Flyway migrations merged into main | `[gate]` | PreToolUse hook: `.claude/hooks/protect-tracked-file.sh flyway` blocks files present in `origin/main`, and fails closed when `origin/main` is missing locally. Covers Write, Edit and MultiEdit only, not shell commands or humans, and is only as fresh as the last fetch |
+| Claude Code does not edit Room schema JSON merged into main | `[gate]` | PreToolUse hook: `.claude/hooks/protect-tracked-file.sh room` (same criterion and limits) |
 | Claude Code leaves `server/src` and `android/` compiling with unit tests green | `[gate]` | Stop hook: `.claude/hooks/stop-verify.sh` (uncommitted changes only) |
 | Claude Code does not run `gh pr merge` or any command containing `--no-verify` | `[gate]` | `permissions.deny` in `.claude/settings.json`. Rules match the command text, so other bypasses (`-n`, `-c core.hooksPath=...`, wrapper scripts) are not caught |
-| No secrets in the repository | `[backlog]` | `.gitleaks.toml` exists. pre-push runs gitleaks only when it is installed. CI `secret-scan` comes in Phase 2 |
+| No secrets in the repository | `[backlog]` | Betterleaks 1.x with `.gitleaks.toml` and `.gitleaksignore`. pre-push runs it only when it is installed. The Phase 2 CI `secret-scan` job will use Betterleaks (not gitleaks, which is frozen) |
+| Shell scripts pass ShellCheck | `[backlog]` | Clean today with `.shellcheckrc`, one documented suppression. It becomes a CI check in Phase 2 |
 | PR title follows the commit rules | `[backlog]` | Phase 2: `pr-title` workflow |
 | No AI attribution in PR bodies or issues | `[backlog]` | Review. Claude Code PR attribution is disabled |
 | Branch naming `<type>/<issue>-<slug>`, `Refs: #N` in commit bodies | `[backlog]` | Review |

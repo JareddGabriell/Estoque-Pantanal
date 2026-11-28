@@ -28,11 +28,11 @@ usage() {
     exit 2
 }
 
-# check_message <label>  (message on stdin)
+# check_message <label> [file]: checks the file, or stdin when no file is given.
 check_message() {
-    local label=$1 hits
+    local label=$1 file=${2:--} hits
     # Drop git comment lines and everything below the "git commit -v" scissors line.
-    hits=$(awk '/^# -+ >8 -+$/ { exit } !/^#/' | grep -Ein -e "$COMBINED" || true)
+    hits=$(awk '/^# -+ >8 -+$/ { exit } !/^#/' "$file" | grep -Ein -e "$COMBINED" || true)
     if [[ -n $hits ]]; then
         echo "no-ai-coauthor: ${label}: AI co-author or attribution found (remove it):" >&2
         printf '  %s\n' "$hits" >&2
@@ -48,7 +48,7 @@ case "$1" in
             check_message "stdin"
         else
             [[ -r $2 ]] || { echo "no-ai-coauthor: cannot read $2" >&2; exit 2; }
-            check_message "$2" < "$2"
+            check_message "$2" "$2"
         fi
         ;;
     --range)

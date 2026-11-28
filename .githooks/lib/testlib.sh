@@ -46,6 +46,20 @@ expect_output_contains() {
     fi
 }
 
+# in_dir <dir> <command...>: runs the command inside <dir>, in a subshell.
+in_dir() {
+    local dir=$1
+    shift
+    (cd "$dir" && "$@")
+}
+
+# pipe_to <text> <command...>: feeds <text> plus a newline to the command's stdin.
+pipe_to() {
+    local text=$1
+    shift
+    printf '%s\n' "$text" | "$@"
+}
+
 # make_repo: creates a throwaway git repository, cds into it and prints its path.
 # The caller is responsible for removing it (use a trap).
 make_repo() {
