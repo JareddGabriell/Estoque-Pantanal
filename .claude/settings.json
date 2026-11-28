@@ -41,7 +41,9 @@
       "Bash(.githooks/checks/*)"
     ],
     "ask": [
-      "Bash(*pr merge*)"
+      "Bash(*pr merge*)",
+      "Bash(gh pr -R *)",
+      "Bash(gh api *merge*)"
     ],
     "deny": [
       "Bash(gh issue delete *)",
