@@ -1,0 +1,13 @@
+# gitleaks configuration (format of gitleaks v8.25+).
+#
+# Policy: extend the default rule set and add no allowlists. A reviewed false
+# positive is silenced at the exact line with a `gitleaks:allow` comment, or in
+# .gitleaksignore by its fingerprint, and the reason goes in the PR. Never add
+# path, regex or commit allowlists that cover more than the one finding.
+# Test credentials come from helper parameters, never as literals next to a
+# key (see .claude/rules/testing.md).
+
+title = "beverage-inventory"
+
+[extend]
+useDefault = true

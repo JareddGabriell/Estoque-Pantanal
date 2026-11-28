@@ -13,6 +13,9 @@ The project is developed on two machines: a Fedora Linux workstation and a Windo
 | IntelliJ IDEA | Backend | — |
 | Docker | PostgreSQL and Quarkus Dev Services | On Windows, Docker Desktop (WSL2 backend) |
 | DBeaver | Inspecting the database | — |
+| perl | `no-emoji.sh` check | Shipped with Git for Windows and Fedora |
+| jq or python3 | Claude Code hooks read their JSON input | Either one is enough. Fedora has python3. On Windows, install jq (`winget install jqlang.jq`) |
+| gitleaks | Secret scan in the pre-push hook | Optional locally. When it is missing, pre-push skips the scan, and CI runs it from Phase 2 |
 
 ## Fedora
 
@@ -45,7 +48,41 @@ This repository is public. Never commit the keystore, `.env` files, `local.prope
 3. Start PostgreSQL with Docker Compose and check that `/q/health` responds.
 4. Add the CI workflows.
 
+## Git hooks
+
+Run this once per clone, on each machine:
+
+```bash
+.githooks/install.sh
+```
+
+It sets `git config core.hooksPath .githooks` for this clone and lists any missing tools. The hooks call the scripts in `.githooks/checks/`, which are the same scripts CI uses:
+
+| Hook | Runs |
+|---|---|
+| `commit-msg` | `commit-subject.sh --file`, `no-ai-coauthor.sh --file`, `no-emoji.sh --file` on the new message |
+| `pre-push` | `.githooks/run-tests.sh`; then `commit-subject.sh`, `no-ai-coauthor.sh` and `no-emoji.sh` with `--range` on the pushed commits; `no-emoji.sh --tracked`; and gitleaks, when it is installed |
+
+To run the checks by hand:
+
+```bash
+.githooks/run-tests.sh                                   # tests of every check and Claude Code hook
+.githooks/checks/commit-subject.sh --subject "feat(sync): add push endpoint"
+.githooks/checks/commit-subject.sh --range origin/main..HEAD
+.githooks/checks/no-emoji.sh --tracked
+```
+
+LANDMINE: `git commit --no-verify` and `git push --no-verify` skip the hooks. Do not use them. CI repeats the checks from Phase 2 on.
+
+On Windows, run the installer from Git Bash. Git runs the hooks with its bundled bash on every platform.
+
+## Claude Code
+
+The project settings in `.claude/settings.json` disable commit and PR attribution, allow the routine commands, and add these hooks:
+
+- PreToolUse: blocks edits to Flyway migrations and Room schema JSON files that are already tracked by git.
+- Stop: when `server/src` or `android/` has uncommitted changes, runs `./gradlew test` (server) or `./gradlew testDebugUnitTest` (android) and sends failures back to Claude.
+
 ## Conventions
 
-- Code, commits, README, docs and issues are written in English.
-- Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `docs:`...).
+See [AGENTS.md](../AGENTS.md) and `.claude/rules/commits-and-prs.md`. In short: code, commits, README, docs and issues are in English, and commits follow [Conventional Commits](https://www.conventionalcommits.org/).
