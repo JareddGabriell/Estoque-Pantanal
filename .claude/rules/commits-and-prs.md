@@ -26,6 +26,8 @@
 - MUST fill in the template sections: What, Why, How to verify, Risk and rollback.
 - MUST state in the PR description any test or threshold that was skipped, disabled or lowered, and why.
 - NEVER put AI attribution in the PR title or body, or in issues.
+- MUST merge only with `gh pr merge <n> --squash --delete-branch`, and only after the human explicitly approves the merge in the session.
+- NEVER merge a PR with failing or pending checks once CI exists (Phase 2).
 
 ## Specs
 

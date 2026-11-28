@@ -77,7 +77,8 @@ Git hooks are local and only run after `.githooks/install.sh`. `--no-verify` ski
 | Claude Code does not edit Flyway migrations merged into main | `[gate]` | PreToolUse hook: `.claude/hooks/protect-tracked-file.sh flyway` blocks files present in `origin/main`, and fails closed when `origin/main` is missing locally. Covers Write, Edit and MultiEdit only, not shell commands or humans, and is only as fresh as the last fetch |
 | Claude Code does not edit Room schema JSON merged into main | `[gate]` | PreToolUse hook: `.claude/hooks/protect-tracked-file.sh room` (same criterion and limits) |
 | Claude Code leaves `server/src` and `android/` compiling with unit tests green | `[gate]` | Stop hook: `.claude/hooks/stop-verify.sh` (uncommitted changes only) |
-| Claude Code does not run `gh pr merge` or any command containing `--no-verify` | `[gate]` | `permissions.deny` in `.claude/settings.json`. Rules match the command text, so other bypasses (`-n`, `-c core.hooksPath=...`, wrapper scripts) are not caught |
+| Claude Code runs `gh pr merge` only after the human confirms it | `[gate]` | `permissions.ask` in `.claude/settings.json`, which takes precedence over the `gh pr *` allow rule. Same text-matching limits as the row below |
+| Claude Code does not run any command containing `--no-verify` | `[gate]` | `permissions.deny` in `.claude/settings.json`. Rules match the command text, so other bypasses (`-n`, `-c core.hooksPath=...`, wrapper scripts) are not caught |
 | No secrets in the repository | `[backlog]` | Betterleaks 1.x with `.gitleaks.toml` and `.gitleaksignore`. pre-push runs it only when it is installed. The Phase 2 CI `secret-scan` job will use Betterleaks (not gitleaks, which is frozen) |
 | Shell scripts pass ShellCheck | `[backlog]` | Clean today with `.shellcheckrc`, one documented suppression. It becomes a CI check in Phase 2 |
 | PR title follows the commit rules | `[backlog]` | Phase 2: `pr-title` workflow |

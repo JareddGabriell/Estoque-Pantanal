@@ -33,8 +33,10 @@
       "Bash(.githooks/run-tests.sh)",
       "Bash(.githooks/checks/*)"
     ],
+    "ask": [
+      "Bash(gh pr merge *)"
+    ],
     "deny": [
-      "Bash(gh pr merge *)",
       "Bash(gh issue delete *)",
       "Bash(gh run delete *)",
       "Bash(*--no-verify*)"
