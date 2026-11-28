@@ -15,7 +15,17 @@ The manager registers suppliers and products, each with a minimum and a target s
 
 ## Running locally
 
-Prerequisites: Docker, JDK 25 and Android Studio.
+Prerequisites: Docker, JDK 25, Android Studio, and perl plus jq or python3 for the hooks.
+
+### First-time setup
+
+Point git at the versioned hooks once per clone:
+
+```bash
+.githooks/install.sh
+```
+
+This sets `core.hooksPath` to `.githooks/`. The `commit-msg` hook checks the commit subject, AI attribution and emoji. The `pre-push` hook repeats those checks on the pushed commits, scans tracked files for emoji, runs the tests of the checks and, when Betterleaks is installed, scans for secrets. See [docs/dev-environment.md](docs/dev-environment.md#git-hooks).
 
 ### API
 
@@ -49,5 +59,6 @@ Never commit the signing keystore, `.env` files, `local.properties` or any real 
 
 ## Documentation
 
+- [AGENTS.md](AGENTS.md): how we work, the rules and the quality bar
 - [Decisions and roadmap](docs/decisions-and-roadmap.md)
 - [Development environment](docs/dev-environment.md)

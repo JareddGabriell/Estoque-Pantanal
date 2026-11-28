@@ -1,0 +1,11 @@
+# Reviewed false positives, one exact finding per line (commit:path:rule:line).
+# Never add a broader exception here; see the policy in .gitleaks.toml.
+#
+# Origin of the two entries below: commits 29bef4f and 626b4b8, both already in
+# main, wrote a placeholder POSTGRES_PASSWORD value (not a secret) on line 4 of
+# infra/.env.example, and the Betterleaks generic-password rule flags that line
+# in each of them. History cannot be rewritten, so the findings stay here.
+# The current infra/.env.example leaves POSTGRES_PASSWORD empty, so a scan of
+# the working tree, or of a clone without history, finds nothing in it.
+29bef4fad17616e7b001a9b6232579ab63766467:infra/.env.example:generic-password:4
+626b4b82bc9fae5cc714042bd462ed8a5324a5e6:infra/.env.example:generic-password:4

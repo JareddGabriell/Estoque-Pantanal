@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew *)",
+      "Bash(./server/gradlew *)",
+      "Bash(./android/gradlew *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git blame *)",
+      "Bash(git grep *)",
+      "Bash(git ls-files *)",
+      "Bash(git rev-parse *)",
+      "Bash(git rev-list *)",
+      "Bash(git merge-base *)",
+      "Bash(git describe *)",
+      "Bash(git shortlog *)",
+      "Bash(git branch --show-current)",
+      "Bash(git branch --list *)",
+      "Bash(git remote -v)",
+      "Bash(gh issue *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh pr status *)",
+      "Bash(gh pr edit *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh run *)",
+      "Bash(docker compose config *)",
+      "Bash(docker compose -f infra/docker-compose.yml config *)",
+      "Bash(.githooks/run-tests.sh)",
+      "Bash(.githooks/checks/*)"
+    ],
+    "ask": [
+      "Bash(*pr merge*)",
+      "Bash(gh pr -R *)",
+      "Bash(gh api *merge*)"
+    ],
+    "deny": [
+      "Bash(gh issue delete *)",
+      "Bash(gh run delete *)",
+      "Bash(*--no-verify*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}/.claude/hooks/protect-tracked-file.sh\" flyway"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}/.claude/hooks/protect-tracked-file.sh\" room"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}/.claude/hooks/stop-verify.sh\"",
+            "timeout": 900
+          }
+        ]
+      }
+    ]
+  }
+}
