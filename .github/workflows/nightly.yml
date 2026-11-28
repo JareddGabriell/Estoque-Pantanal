@@ -1,0 +1,36 @@
+name: Nightly
+
+# Slow checks that do not fit in a PR run. Phase 3 fills in mutation testing
+# (PIT on the server domain classes, report uploaded as an artifact) and
+# Phase 4 fills in Android mutation testing and the Maestro E2E flow.
+# Until then each job only states that it is not configured, so a green
+# nightly run proves nothing yet.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'   # 03:17 in America/Sao_Paulo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  server-mutation:
+    name: server-mutation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Not configured yet
+        run: echo "::notice title=server-mutation::PIT on the server domain classes arrives in Phase 3."
+
+  android-e2e:
+    name: android-e2e
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Not configured yet
+        run: echo "::notice title=android-e2e::PIT on :core:domain and the Maestro smoke flow arrive in Phase 4."

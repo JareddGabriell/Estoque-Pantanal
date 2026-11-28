@@ -1,0 +1,234 @@
+name: CI
+
+# Repeats the local git hook checks on every PR and builds the modules that
+# changed. Shared jobs (policy, shellcheck, secret-scan, compose-validate)
+# always run; server and android run on a PR only when their module or this
+# workflow changes, and always on pushes to main (so main keeps a warm cache).
+#
+# LANDMINE: path filtering is done per job (the changes job), not with
+# on.pull_request.paths. A skipped job reports success to a required status
+# check, while a workflow that never starts leaves the check pending forever
+# and blocks the merge.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Cancel superseded PR runs; let every run on main finish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read   # paths-filter lists the PR files through the API
+    outputs:
+      server: ${{ github.event_name != 'pull_request' || steps.filter.outputs.server == 'true' }}
+      android: ${{ github.event_name != 'pull_request' || steps.filter.outputs.android == 'true' }}
+    steps:
+      - name: Detect changed modules
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            server:
+              - 'server/**'
+              - '.github/workflows/ci.yml'
+            android:
+              - 'android/**'
+              - '.github/workflows/ci.yml'
+
+  server:
+    name: server
+    needs: changes
+    if: needs.changes.outputs.server == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+      # Basic provider: the MIT-licensed cache on top of actions/cache. The
+      # default "enhanced" provider is proprietary. The action also validates
+      # the Gradle wrapper checksums.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-provider: basic
+      # Dev Services starts PostgreSQL with Testcontainers on the runner's Docker.
+      - name: Build and test
+        run: ./gradlew build --console=plain
+
+  android:
+    name: android
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # android/gradle/gradle-daemon-jvm.properties asks for a JDK 25 daemon.
+      # Providing it here avoids a toolchain download on every run. AGP itself
+      # needs JDK 17 or newer.
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-provider: basic
+      # The runner image ships the Android SDK with its licenses accepted, so
+      # AGP downloads any missing platform (compileSdk) on its own.
+      - name: Assemble, lint and unit test
+        run: ./gradlew assembleDebug lintDebug testDebugUnitTest --console=plain
+      - name: Upload lint report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-lint-report
+          path: android/app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+          retention-days: 7
+
+  policy:
+    name: policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Tests of the check scripts and Claude Code hooks
+        run: .githooks/run-tests.sh
+      - name: Commit messages in the range
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [[ $EVENT == pull_request ]]; then
+            range="$(git merge-base "$PR_BASE" "$PR_HEAD")..${PR_HEAD}"
+          elif [[ -n $PUSH_BEFORE ]] && git cat-file -e "${PUSH_BEFORE}^{commit}" 2> /dev/null; then
+            range="${PUSH_BEFORE}..HEAD"
+          else
+            range="HEAD^!"   # manual run, or a push without a usable "before"
+          fi
+          echo "Checking commit messages in ${range}"
+          status=0
+          .githooks/checks/commit-subject.sh --range "$range" || status=1
+          .githooks/checks/no-ai-coauthor.sh --range "$range" || status=1
+          .githooks/checks/no-emoji.sh --range "$range" || status=1
+          exit "$status"
+      - name: Emoji in tracked files
+        run: .githooks/checks/no-emoji.sh --tracked
+
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      # LANDMINE: bump version and checksum together, from the release page
+      # of koalaman/shellcheck. Keep it in step with the version developers run.
+      SHELLCHECK_VERSION: v0.11.0
+      SHELLCHECK_SHA256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install ShellCheck
+        run: |
+          archive="shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz"
+          curl -fsSL --retry 3 -o "${RUNNER_TEMP}/${archive}" \
+            "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/${archive}"
+          echo "${SHELLCHECK_SHA256}  ${RUNNER_TEMP}/${archive}" | sha256sum --check --strict
+          tar -xJf "${RUNNER_TEMP}/${archive}" -C "$RUNNER_TEMP"
+          echo "${RUNNER_TEMP}/shellcheck-${SHELLCHECK_VERSION}" >> "$GITHUB_PATH"
+      # Every tracked file under .githooks/ and .claude/hooks/ that is a shell
+      # script by extension or shebang, so new hooks are covered without
+      # editing this list. ShellCheck reads .shellcheckrc from the repository root.
+      - name: Run ShellCheck
+        run: |
+          shellcheck --version
+          mapfile -t scripts < <(
+            git ls-files -- .githooks .claude/hooks | while IFS= read -r f; do
+              if [[ $f == *.sh ]] || head -n 1 "$f" | grep -Eq '^#!.*\b(ba)?sh\b'; then
+                printf '%s\n' "$f"
+              fi
+            done
+          )
+          printf 'Checking %d scripts:\n' "${#scripts[@]}"
+          printf '  %s\n' "${scripts[@]}"
+          shellcheck "${scripts[@]}"
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      # LANDMINE: Betterleaks 1.x only. 2.x drops --log-opts and .gitleaksignore
+      # (see .githooks/pre-push and .gitleaks.toml). Bump version and checksum
+      # together, from checksums.txt of the betterleaks/betterleaks release.
+      BETTERLEAKS_VERSION: 1.10.1
+      BETTERLEAKS_SHA256: c174b42d7aa60caf58c0c3e555c0e4bed01fe6b0d99a412bce777b5af4ce913e
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Betterleaks
+        run: |
+          archive="betterleaks_${BETTERLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL --retry 3 -o "${RUNNER_TEMP}/${archive}" \
+            "https://github.com/betterleaks/betterleaks/releases/download/v${BETTERLEAKS_VERSION}/${archive}"
+          echo "${BETTERLEAKS_SHA256}  ${RUNNER_TEMP}/${archive}" | sha256sum --check --strict
+          mkdir -p "${RUNNER_TEMP}/betterleaks"
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}/betterleaks" betterleaks
+          echo "${RUNNER_TEMP}/betterleaks" >> "$GITHUB_PATH"
+      # Same flags and files as .githooks/pre-push. Without --log-opts it scans
+      # the whole history of the checkout, not only the pushed range.
+      - name: Scan the git history
+        run: |
+          betterleaks version
+          betterleaks git --no-banner --redact --config .gitleaks.toml \
+            --gitleaks-ignore-path . .
+
+  compose-validate:
+    name: compose-validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The compose file reads infra/.env (env_file and interpolation). The
+      # example file leaves POSTGRES_PASSWORD empty, which is enough to check
+      # the syntax; no password is needed or committed.
+      - name: Validate infra/docker-compose.yml
+        run: |
+          cp infra/.env.example infra/.env
+          docker compose -f infra/docker-compose.yml config -q

@@ -1,0 +1,40 @@
+name: PR title
+
+# PRs are squash-merged, so the title becomes the commit subject on main and
+# must pass the same checks as a commit message. The body is checked for AI
+# attribution too.
+#
+# LANDMINE: the title and body are attacker-controlled text. They reach the
+# scripts only through env and files, never through ${{ }} inside run.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    name: pr-title
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the title and body
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          status=0
+          .githooks/checks/commit-subject.sh --subject "$PR_TITLE" || status=1
+          printf '%s\n' "$PR_TITLE" | .githooks/checks/no-emoji.sh --file - || status=1
+          printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" | .githooks/checks/no-ai-coauthor.sh --file - || status=1
+          exit "$status"

@@ -27,7 +27,7 @@
 - MUST state in the PR description any test or threshold that was skipped, disabled or lowered, and why.
 - NEVER put AI attribution in the PR title or body, or in issues.
 - MUST merge only with `gh pr merge <n> --squash --delete-branch`, and only after the human explicitly approves the merge in the session.
-- NEVER merge a PR with failing or pending checks once CI exists (Phase 2).
+- NEVER merge a PR with failing or pending checks.
 
 ## Specs
 
@@ -40,4 +40,4 @@
 
 ## Enforcement
 
-The commit-msg and pre-push hooks run `.githooks/checks/commit-subject.sh`, `no-ai-coauthor.sh` and `no-emoji.sh`. Install them with `.githooks/install.sh`. PR title checks, branch naming and `Refs:` lines are not enforced yet; see the quality bar in `AGENTS.md`.
+The commit-msg and pre-push hooks run `.githooks/checks/commit-subject.sh`, `no-ai-coauthor.sh` and `no-emoji.sh`. Install them with `.githooks/install.sh`. The CI `policy` job runs the same checks on the PR commits, and the `pr-title` workflow runs them on the PR title (and `no-ai-coauthor.sh` on the body). Branch naming and `Refs:` lines are not enforced yet; see the quality bar in `AGENTS.md`.

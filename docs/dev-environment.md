@@ -15,8 +15,8 @@ The project is developed on two machines: a Fedora Linux workstation and a Windo
 | DBeaver | Inspecting the database | — |
 | perl | `no-emoji.sh` check | Shipped with Git for Windows and Fedora |
 | jq or python3 | Claude Code hooks read their JSON input | Either one is enough on Fedora, which has python3. On Windows, jq is required (see below) |
-| Betterleaks 1.x | Secret scan in the pre-push hook | Optional locally (Fedora: `sudo dnf install betterleaks`). When it is missing, pre-push skips the scan. CI runs it from Phase 2 |
-| ShellCheck | Linting the hook scripts | `shellcheck .githooks/commit-msg .githooks/pre-push .githooks/*.sh .githooks/*/*.sh .claude/hooks/*.sh .claude/hooks/lib/*.sh` (settings in `.shellcheckrc`). It becomes a CI check in Phase 2 |
+| Betterleaks 1.x | Secret scan in the pre-push hook | Optional locally (Fedora: `sudo dnf install betterleaks`). When it is missing, pre-push skips the scan. CI always runs it (`secret-scan` job) |
+| ShellCheck | Linting the hook scripts | `shellcheck .githooks/commit-msg .githooks/pre-push .githooks/*.sh .githooks/*/*.sh .claude/hooks/*.sh .claude/hooks/lib/*.sh` (settings in `.shellcheckrc`). CI runs it on every PR (`shellcheck` job) |
 
 ## Fedora
 
@@ -48,7 +48,7 @@ This repository is public. Never commit the keystore, `.env` files, `local.prope
 1. Create the Android project in `android/` with the Android Studio wizard (Empty Activity, Compose, Kotlin DSL).
 2. Generate the Quarkus project in `server/` at code.quarkus.io, with these extensions: REST Jackson, Hibernate ORM Panache, JDBC PostgreSQL, Flyway, SmallRye JWT and SmallRye Health.
 3. Start PostgreSQL with Docker Compose and check that `/q/health` responds.
-4. Add the CI workflows.
+4. Add the CI workflows (done; see [ci.md](ci.md)).
 
 ## Git hooks
 
@@ -74,7 +74,7 @@ To run the checks by hand:
 .githooks/checks/no-emoji.sh --tracked
 ```
 
-LANDMINE: `git commit --no-verify` and `git push --no-verify` skip the hooks. Do not use them. CI repeats the checks from Phase 2 on.
+LANDMINE: `git commit --no-verify` and `git push --no-verify` skip the hooks. Do not use them. CI repeats the checks on every PR (see [ci.md](ci.md)).
 
 On Windows, run the installer from Git Bash. Git runs the hooks with its bundled bash on every platform.
 

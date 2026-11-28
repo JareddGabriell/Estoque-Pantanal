@@ -5,7 +5,7 @@
 #   2. commit subjects, AI attribution and emoji in the pushed commit messages
 #   3. emoji in every tracked file
 #   4. Betterleaks secret scan of the pushed commits, when Betterleaks 1.x is
-#      installed (the Phase 2 CI runs it on every PR). It reads .gitleaks.toml
+#      installed (the CI secret-scan job runs it on every PR). It reads .gitleaks.toml
 #      and .gitleaksignore, passed explicitly because Betterleaks does not
 #      auto-load them.
 #
